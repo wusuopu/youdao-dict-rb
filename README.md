@@ -6,3 +6,4 @@ Youdao English-Chinese dict
 
 ### Requirements   
 gem install nokogiri  
+gem install sqlite3  
