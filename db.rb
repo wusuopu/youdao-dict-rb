@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 #-*- coding:utf-8 -*-
 
 # Copyright (C) 2012 ~ 2013 Deepin, Inc.
@@ -30,6 +30,8 @@ module Database
 
     def initialize
       @db = SQLite3::Database.new(FILE_NAME) 
+      @insert_state = @db.prepare "insert into word (keyword, pronounce, voice, trans, web_trans, word_group) values (?, ?, ?, ?, ?, ?)"
+      @select_state = @db.prepare "SELECT * FROM word WHERE keyword=(?);"
     end
 
     def table_exists?
@@ -87,15 +89,20 @@ module Database
       rescue
         word_group = "[]"
       end
-      # TODO check sql syntax
-      sql = """
-        insert into word (keyword, pronounce, voice, trans, web_trans, word_group)
-        values ('%s', '%s', '%s', '%s', '%s', '%s');""" % [ keyword, pronounce, voice, trans, web_trans, word_group ]
-      @db.execute(sql)
+      begin
+        @insert_state.execute keyword, pronounce, voice, trans, web_trans, word_group 
+      rescue Exception => e
+        p e
+        nil
+      end
     end
 
     def select(word)
-      @db.execute( "SELECT * FROM word WHERE keyword='#{word}';" ) do |row|
+      @select_state.execute word do |result_set|
+        row = result_set.first
+        if ! row then
+          return nil
+        end
         res = {}
         res[:keyword] = row[1]
         begin
@@ -133,6 +140,8 @@ module Database
     end
 
     def close
+      @insert_state.close
+      @select_state.close
       @db.close
     end
   end
