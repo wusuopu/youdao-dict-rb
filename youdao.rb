@@ -28,20 +28,33 @@ require 'nokogiri'
 require "./db.rb"
 require "./style"
 
+DOWNLOAD_PATH = File.join File.dirname(File.realpath(__FILE__)), "download"
 
-def down_media(uri, file)
+
+def down_media(url, file)
   # download phonetic mp3 file
-  uri = URI(uri)
-  Net::HTTP.start(uri.host, uri.port) do |http|
-    request = Net::HTTP::Get.new uri
+  begin
+    if ! File.exists? DOWNLOAD_PATH then
+      Dir.mkdir DOWNLOAD_PATH
+    end
+    if ! File.directory? DOWNLOAD_PATH then
+      return url
+    end
+    uri = URI(url)
+    Net::HTTP.start(uri.host, uri.port) do |http|
+      request = Net::HTTP::Get.new uri
 
-    http.request request do |response|
-      open file, 'w' do |io|
-        response.read_body do |chunk|
-          io.write chunk
+      http.request request do |response|
+        open(File.join(DOWNLOAD_PATH, file), 'wb') do |io|
+          response.read_body do |chunk|
+            io.write chunk
+          end
         end
       end
     end
+  rescue Exception => e
+    p e
+    return url
   end
   file
 end
@@ -132,8 +145,9 @@ class Youdao
     word_pronounce.each do |x|
       phonetic = x.xpath('span')
       voice = x.xpath('a')
-      # TODO download voice
-      voice_url = "http://dict.youdao.com/dictvoice?audio=#{voice.attr('data-rel')}"
+      voice_url = down_media(
+        "http://dict.youdao.com/dictvoice?audio=#{voice.attr('data-rel')}",
+        "%f.mp3" % Time.now)
       pronounce.push "#{x.child.to_s.strip}\t#{phonetic.text}"
       voice_arr.push voice_url
     end
@@ -184,21 +198,22 @@ class Youdao
   end
 end
 
-#p down_media 'http://dict.youdao.com/dictvoice?audio=b', 'test'
-y = Youdao.new
-while true
-  print ">>>"
-  word = gets
-  if ! word
-    exit
+if caller.length == 0 then
+  y = Youdao.new
+  while true
+    print ">>>"
+    word = gets
+    if ! word
+      exit
+    end
+    if word.strip! == ""
+      redo
+    end
+    y.query word.downcase, word.match(/\p{Han}+/u)
+    MyStyle::color_puts '-'*45, MyStyle::NORMAL_GREEN
   end
-  if word.strip! == ""
-    redo
-  end
-  y.query word.downcase, word.match(/\p{Han}+/u)
-  MyStyle::color_puts '-'*45, MyStyle::NORMAL_GREEN
-end
 
-y.close_db
+  y.close_db
+end
 __END__
 

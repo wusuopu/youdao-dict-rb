@@ -1,9 +1,22 @@
-Youdao English-Chinese dict
+Youdao dict
 =========
 
-用Ruby写的一个简单的有道英汉词典，目前不支持汉译英。
+用Ruby写的一个简单的有道词典。
 
 
 ### Requirements   
-gem install nokogiri  
-gem install sqlite3  
+>  gem install nokogiri  
+>  gem install sqlite3  
+
+
+### TODO
+  * 打算用GTK写个前端界面。  
+
+
+---------------------
+作者：  
+龍昌  
+admin@longchangjin.cn  
+<http://www.xefan.com>  
+
+
