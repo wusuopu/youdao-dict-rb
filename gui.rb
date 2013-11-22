@@ -13,7 +13,7 @@ class MainWin < Gtk::Window
       Gtk.main_quit
     end
     set_title "有道词典简易版"
-    set_size_request 500, 300
+    set_size_request 550, 350
     set_resizable false
     set_window_position Gtk::Window::POS_CENTER
     @youdao = Youdao.new
@@ -30,34 +30,68 @@ class MainWin < Gtk::Window
 
     textview = Gtk::TextView.new
     textview.editable = false
+    sw = Gtk::ScrolledWindow.new
+    sw.add textview
 
     statusbar = Gtk::Statusbar.new
     statusbar.pack_start(Gtk::Label.new("作者：龙昌  http://www.xefan.com"), false, false)
 
     vbox = Gtk::VBox.new false
     vbox.pack_start hbox, false, false
-    vbox.pack_start textview
+    vbox.pack_start sw
     vbox.pack_start statusbar, false, false
 
     set_border_width 5
 
     button.signal_connect "clicked" do
-      puts entry.text, entry.text.encoding
       word = entry.text
       if word.strip! != "" then
         button.sensitive = false
         Thread.start {
-          query button, word
+          query button, word, textview
         }
       end
     end
     add vbox
+
+    accel = Gtk::AccelGroup.new
+    add_accel_group accel
+    button.add_accelerator 'clicked', accel, 65293, 0, Gtk::ACCEL_VISIBLE   # Return
+    button.add_accelerator 'clicked', accel, 65421, 0, Gtk::ACCEL_VISIBLE   # KP_ENTER
   end
 
   private
-  def query(bt, word)
-    @youdao.query word.downcase, word.match(/\p{Han}+/u)
+  def query(bt, word, textview)
+    result = @youdao.query word.downcase, word.match(/\p{Han}+/u)
     bt.sensitive = true
+    if result then
+      string = ""
+      if !result[:pronounce].empty? then
+        string += "音标:\n"
+        result[:pronounce].each do |x|
+          string += "\t%s\n" % (x.strip.gsub("\t", ':'))
+        end
+      end
+      if !result[:trans].empty? then
+        string += "\n基本翻译:\n"
+        result[:trans].each do |x|
+          string += "\t#{x}\n"
+        end
+      end
+      if !result[:web_trans].empty? then
+        string += "\n网络翻译:\n"
+        result[:web_trans].each do |x|
+          string += "\t#{x}\n"
+        end
+      end
+      if !result[:word_group].empty? then
+        string += "\n词组:\n"
+        result[:word_group].each do |x|
+          string += "\t#{x}\n"
+        end
+      end
+      textview.buffer.text = string
+    end
   end
 end
 

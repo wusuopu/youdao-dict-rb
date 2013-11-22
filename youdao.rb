@@ -84,19 +84,13 @@ class Youdao
       puts e
       return
     end
-    parse_res result
-  end
-
-  private
-  def query_sql(word)
-    @db.select word
-  end
-
-  def insert_sql(result)
-    @db.insert result
+    return result
   end
 
   def parse_res(result)
+    if !result then
+      return
+    end
     if !result[:pronounce].empty? then
       MyStyle::color_puts "音标", MyStyle::NORMAL_RED
       result[:pronounce].each do |x|
@@ -123,6 +117,15 @@ class Youdao
     end
   end
 
+  private
+  def query_sql(word)
+    @db.select word
+  end
+
+  def insert_sql(result)
+    @db.insert result
+  end
+
   def parse_xpath(page, is_chinese)
     res = {}
     result = page.xpath('//div[@id="results"]/div[@id="results-contents"]')
@@ -145,9 +148,11 @@ class Youdao
     word_pronounce.each do |x|
       phonetic = x.xpath('span')
       voice = x.xpath('a')
-      voice_url = down_media(
-        "http://dict.youdao.com/dictvoice?audio=#{voice.attr('data-rel')}",
-        "%f.mp3" % Time.now)
+      # 下载音标音频文件
+      #voice_url = down_media(
+        #"http://dict.youdao.com/dictvoice?audio=#{voice.attr('data-rel')}",
+        #"%f.mp3" % Time.now)
+      voice_url = "http://dict.youdao.com/dictvoice?audio=#{voice.attr('data-rel')}"
       pronounce.push "#{x.child.to_s.strip}\t#{phonetic.text}"
       voice_arr.push voice_url
     end
@@ -209,7 +214,7 @@ if caller.length == 0 then
     if word.strip! == ""
       redo
     end
-    y.query word.downcase, word.match(/\p{Han}+/u)
+    y.parse_res (y.query word.downcase, word.match(/\p{Han}+/u))
     MyStyle::color_puts '-'*45, MyStyle::NORMAL_GREEN
   end
 
