@@ -7,11 +7,11 @@ Youdao dict
 ### Requirements   
 >  gem install nokogiri  
 >  gem install sqlite3  
+>  gem install gtk2  
 
 
-### TODO
-  * 打算用GTK写个前端界面。  
-
+>  rb_youdao.sh 命令版的  
+>  gui.rb 前端界面程序，使用GTK编写的   
 
 ---------------------
 作者：  
