@@ -63,9 +63,6 @@ class Youdao
   def initialize()
     @url = "http://dict.youdao.com/search?le=eng&q="
     @db = Database::DBManager.new
-    if ! @db.table_exists?
-      @db.create_table
-    end
   end
 
   def close_db

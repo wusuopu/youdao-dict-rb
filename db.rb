@@ -30,6 +30,8 @@ module Database
 
     def initialize
       @db = SQLite3::Database.new(FILE_NAME) 
+      create_table unless table_exists?
+
       @insert_state = @db.prepare "insert into word (keyword, pronounce, voice, trans, web_trans, word_group) values (?, ?, ?, ?, ?, ?)"
       @select_state = @db.prepare "SELECT * FROM word WHERE keyword=(?);"
     end
